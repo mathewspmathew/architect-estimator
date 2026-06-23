@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
+import { rateLimiter } from "@/lib/rate-limiter";
+import { validateImageBuffer } from "@/lib/image-validation";
+
+function getClientIP(req: NextRequest): string {
+    const forwarded = req.headers.get("x-forwarded-for");
+    return forwarded?.split(",")[0].trim() || "0.0.0.0";
+}
 
 function getAIClient() {
     const projectId = process.env.NEXT_VERTEX_PROJECT_ID;
@@ -25,6 +32,15 @@ function getAIClient() {
 
 export async function POST(req: NextRequest) {
     try {
+        const ip = getClientIP(req);
+
+        if (!rateLimiter.check(ip)) {
+            return NextResponse.json(
+                { error: "Too many requests. Max 5 analyses per 10 minutes." },
+                { status: 429 }
+            );
+        }
+
         const formData = await req.formData();
         const file = formData.get("image") as File;
 
@@ -34,6 +50,15 @@ export async function POST(req: NextRequest) {
 
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
+
+        const validation = validateImageBuffer(buffer);
+        if (!validation.valid) {
+            return NextResponse.json(
+                { error: validation.error },
+                { status: 413 }
+            );
+        }
+
         const base64Image = buffer.toString("base64");
 
         const ai = getAIClient();

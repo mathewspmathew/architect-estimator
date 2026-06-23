@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Upload, X, FileImage, Image as ImageIcon } from "lucide-react"
+import { Upload, X, FileImage, Image as ImageIcon, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+import { validateImageFile, MAX_FILE_SIZE_MB } from "@/lib/image-validation"
 
 interface ImageUploaderProps {
     onImageSelect: (file: File | null) => void
@@ -14,9 +15,20 @@ interface ImageUploaderProps {
 export function ImageUploader({ onImageSelect, className }: ImageUploaderProps) {
     const [preview, setPreview] = useState<string | null>(null)
     const [isDragging, setIsDragging] = useState(false)
+    const [error, setError] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const handleFile = (file: File) => {
+        const validation = validateImageFile(file)
+
+        if (!validation.valid) {
+            setError(validation.error || "Invalid file")
+            onImageSelect(null)
+            return
+        }
+
+        setError(null)
+
         if (file && file.type.startsWith("image/")) {
             const reader = new FileReader()
             reader.onload = (e) => {
@@ -53,6 +65,7 @@ export function ImageUploader({ onImageSelect, className }: ImageUploaderProps) 
 
     const removeImage = () => {
         setPreview(null)
+        setError(null)
         onImageSelect(null)
         if (fileInputRef.current) {
             fileInputRef.current.value = ""
@@ -61,6 +74,12 @@ export function ImageUploader({ onImageSelect, className }: ImageUploaderProps) 
 
     return (
         <div className={cn("w-full max-w-xl mx-auto", className)}>
+            {error && (
+                <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-destructive">{error}</p>
+                </div>
+            )}
             <Card className={cn(
                 "border-2 border-dashed transition-all duration-300",
                 isDragging ? "border-primary bg-primary/5 scale-105" : "border-muted-foreground/25 hover:border-primary/50",

@@ -5,12 +5,13 @@ import { ImageUploader } from "@/components/ImageUploader"
 import { MaterialList } from "@/components/MaterialList"
 import { Material } from "@/types"
 import { Button } from "@/components/ui/button"
-import { Calculator, Hammer, ArrowRight } from "lucide-react"
+import { Calculator, Hammer, ArrowRight, AlertCircle } from "lucide-react"
 
 export default function Home() {
   const [materials, setMaterials] = useState<Material[]>([])
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleImageSelect = async (file: File | null) => {
     setSelectedImage(file)
@@ -39,7 +40,7 @@ export default function Home() {
       formData.append("image", selectedImage)
 
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 60000)
+      const timeoutId = setTimeout(() => controller.abort(), 180000) // 3 minutes for image analysis
 
       const response = await fetch("/api/analyze", {
         method: "POST",
@@ -50,23 +51,25 @@ export default function Home() {
       if (response.ok) {
         const data = await response.json()
         setMaterials(data.materials)
+        setError(null)
       } else {
         const errorData = await response.json();
         console.error("Analysis failed:", errorData.error);
-        alert(`Analysis failed: ${errorData.error}`);
-        // Fallback to mock data for demo purposes if API fails
-        setTimeout(() => {
-          setMaterials([
-            { id: "1", name: "Teak Wood Top (Mock Fallback)", quantity: 1, unit: "panel", price: 120, availableSources: [] },
-            { id: "2", name: "Steel Legs", quantity: 4, unit: "pcs", price: 45, availableSources: [] },
-            { id: "3", name: "Varnish", quantity: 0.5, unit: "liters", price: 15, availableSources: [] }
-          ])
-          setIsAnalyzing(false)
-        }, 1000)
-        return
+
+        if (response.status === 429) {
+          setError("Too many requests. Please wait 10 minutes before trying again.")
+          setTimeout(() => setError(null), 10000)
+        } else {
+          setError(errorData.error || "Analysis failed. Please try again.")
+          setTimeout(() => setError(null), 5000)
+        }
       }
     } catch (e) {
       console.error(e)
+      if (e instanceof Error && e.name === 'AbortError') {
+        setError("Request timeout. Image analysis took too long. Please try again.")
+        setTimeout(() => setError(null), 5000)
+      }
     } finally {
       setIsAnalyzing(false)
     }
@@ -93,6 +96,12 @@ export default function Home() {
       </header>
 
       <main className="flex-1 container mx-auto px-4 py-8 max-w-7xl">
+        {error && (
+          <div className="mb-6 p-4 bg-destructive/10 border border-destructive/30 rounded-lg flex items-start gap-3 max-w-2xl mx-auto">
+            <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-destructive">{error}</p>
+          </div>
+        )}
         <div className="text-center mb-12 space-y-4">
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
             From Sketch to Cost.<br />In Seconds.
@@ -119,7 +128,10 @@ export default function Home() {
                   className="w-full max-w-xs text-lg h-12 shadow-xl shadow-primary/20"
                 >
                   {isAnalyzing ? (
-                    <>Analyzing...</>
+                    <>
+                      <span className="inline-block animate-spin mr-2">⏳</span>
+                      Analyzing image (can take up to 3 min)...
+                    </>
                   ) : (
                     <>
                       Analyze Drawing <ArrowRight className="ml-2 h-5 w-5" />
