@@ -38,11 +38,14 @@ export default function Home() {
       const formData = new FormData()
       formData.append("image", selectedImage)
 
-      // This endpoint will be created next
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 60000)
+
       const response = await fetch("/api/analyze", {
         method: "POST",
-        body: formData
-      })
+        body: formData,
+        signal: controller.signal
+      }).finally(() => clearTimeout(timeoutId))
 
       if (response.ok) {
         const data = await response.json()

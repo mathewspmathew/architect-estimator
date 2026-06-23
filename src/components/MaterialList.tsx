@@ -42,7 +42,7 @@ export function MaterialList({ materials, onUpdate, isLoading }: MaterialListPro
 
     const handleAdd = () => {
         const newMaterial: Material = {
-            id: Math.random().toString(36).substr(2, 9),
+            id: crypto.randomUUID(),
             name: "New Material",
             quantity: 1,
             unit: "pcs",
@@ -151,7 +151,6 @@ export function MaterialList({ materials, onUpdate, isLoading }: MaterialListPro
                                                 type="number"
                                                 value={material.price}
                                                 onChange={(e) => handleEdit(material.id, "price", parseFloat(e.target.value) || 0)}
-                                                prefix="₹"
                                                 className="font-medium"
                                             />
                                             {material.selectedSource && (
