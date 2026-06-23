@@ -1,36 +1,113 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ArchEstimator
+
+A web application that analyzes architectural drawings to automatically identify materials, quantities, and real-time pricing.
+
+## What It Does
+
+Upload a photo of a furniture or architectural element, and ArchEstimator will:
+1. **Analyze** the image using AI (Google Gemini) to identify materials
+2. **Fetch pricing** data to show estimated market prices
+3. **Display results** with materials, quantities, units, and price sources
+
+## How to Use
+
+1. **Upload an Image**
+   - Drag and drop an image onto the page, or click to select a file
+   - Supports furniture, construction elements, architectural components
+
+2. **Analyze**
+   - Click the "Analyze" button to extract materials from the image
+   - The app uses AI to identify what materials are visible
+
+3. **View Results**
+   - See a list of identified materials with estimated quantities
+   - Browse available price sources and vendors
+   - Prices are fetched from real-time Google Shopping results
+
+## Tech Stack
+
+- **Framework**: Next.js 16.1.1 (React 19, TypeScript 5)
+- **UI**: Tailwind CSS 4 + shadcn/ui components
+- **AI**: Google Generative AI (Gemini models)
+- **Icons**: lucide-react
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js (v18+)
+- `GOOGLE_API_KEY` environment variable (optional; app works with mock data if not set)
+
+### Installation
+
+```bash
+npm install
+```
+
+### Development
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Production Build
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+## Environment Variables
 
-To learn more about Next.js, take a look at the following resources:
+- **`GOOGLE_API_KEY`** — Your Google Cloud API key for Gemini image analysis. If not set, the app uses mock data for testing.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## How It Works
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Input
+- An image file (JPG, PNG, etc.) of a furniture or architectural element
 
-## Deploy on Vercel
+### Processing
+- Image is sent to Google Gemini API
+- AI identifies materials, quantities, and units
+- Material list is used to query Google Shopping for current prices
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Output
+- **Materials**: Name, quantity, unit, and confidence score
+- **Price Sources**: Vendor name, current price, currency, and link to product
+- **Editable**: Quantities and prices can be adjusted in the UI
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Development Commands
+
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Start dev server (http://localhost:3000) |
+| `npm run build` | Build for production |
+| `npm start` | Start production server |
+| `npm run lint` | Run ESLint checks |
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── page.tsx              # Main page (upload + results)
+│   ├── layout.tsx            # Root layout
+│   └── api/
+│       ├── analyze/route.ts  # Image analysis endpoint
+│       └── prices/route.ts   # Price data endpoint
+├── components/
+│   ├── ImageUploader.tsx     # Drag-drop upload component
+│   ├── MaterialList.tsx      # Display & edit materials
+│   └── ui/                   # shadcn/ui components
+├── lib/
+│   └── utils.ts             # Helper utilities
+└── types/
+    └── index.ts             # TypeScript interfaces
+```
+
+## Notes
+
+- The app uses mock pricing data by default for demonstration
+- API keys for Google Generative AI are optional (app uses fallback mock data if missing)
+- Future versions can integrate real pricing APIs
