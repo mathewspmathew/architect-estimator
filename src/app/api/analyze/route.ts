@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { rateLimiter } from "@/lib/rate-limiter";
 import { validateImageBuffer } from "@/lib/image-validation";
+import { auth } from "@/lib/auth";
+import { spendCredit, refundCredit } from "@/lib/credits";
 
 function getClientIP(req: NextRequest): string {
     const forwarded = req.headers.get("x-forwarded-for");
@@ -31,6 +33,8 @@ function getAIClient() {
 }
 
 export async function POST(req: NextRequest) {
+    let chargedUserEmail: string | null = null;
+
     try {
         const ip = getClientIP(req);
 
@@ -41,10 +45,22 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        const session = await auth();
+        if (!session?.user?.email) {
+            return NextResponse.json({ error: "Sign in with Google to analyze images." }, { status: 401 });
+        }
+
+        const remaining = await spendCredit(session.user.email);
+        if (remaining === null) {
+            return NextResponse.json({ error: "You're out of free credits." }, { status: 402 });
+        }
+        chargedUserEmail = session.user.email;
+
         const formData = await req.formData();
         const file = formData.get("image") as File;
 
         if (!file) {
+            await refundCredit(chargedUserEmail);
             return NextResponse.json({ error: "No image provided" }, { status: 400 });
         }
 
@@ -53,6 +69,7 @@ export async function POST(req: NextRequest) {
 
         const validation = validateImageBuffer(buffer);
         if (!validation.valid) {
+            await refundCredit(chargedUserEmail);
             return NextResponse.json(
                 { error: validation.error },
                 { status: 413 }
@@ -126,6 +143,7 @@ export async function POST(req: NextRequest) {
 
         if (!text) {
             console.error("Empty response from Gemini API");
+            await refundCredit(chargedUserEmail);
             return NextResponse.json({ error: "Gemini API returned empty response" }, { status: 500 });
         }
 
@@ -138,6 +156,7 @@ export async function POST(req: NextRequest) {
             console.error("JSON Parse Error:", parseError);
             console.error("Raw response text:", text);
             console.error("Cleaned JSON string:", jsonString);
+            await refundCredit(chargedUserEmail);
             return NextResponse.json({
                 error: "Failed to parse AI response - invalid JSON format from model",
                 details: parseError instanceof Error ? parseError.message : "Unknown error"
@@ -146,6 +165,9 @@ export async function POST(req: NextRequest) {
 
     } catch (error) {
         console.error("Analysis Error:", error);
+        if (chargedUserEmail) {
+            await refundCredit(chargedUserEmail);
+        }
         const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
         return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
