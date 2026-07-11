@@ -14,9 +14,26 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://architect-estimator.vercel.app";
+const title = "ArchEstimator | From Sketch to Cost, in Seconds";
+const description = "Upload an architectural drawing and let AI identify materials, quantities, and real-time market prices.";
+
 export const metadata: Metadata = {
-  title: "Architect Estimator | Material Cost Analysis",
-  description: "AI-powered material estimation and pricing for architects.",
+  metadataBase: new URL(siteUrl),
+  title,
+  description,
+  openGraph: {
+    title,
+    description,
+    url: siteUrl,
+    siteName: "ArchEstimator",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+  },
 };
 
 export default function RootLayout({
