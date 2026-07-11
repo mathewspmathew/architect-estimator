@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Upload, X, FileImage, Image as ImageIcon, AlertCircle } from "lucide-react"
+import { Upload, X, RefreshCw, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
@@ -87,15 +87,27 @@ export function ImageUploader({ onImageSelect, className }: ImageUploaderProps) 
             )}>
                 <CardContent className="p-0">
                     {preview ? (
-                        <div className="relative rounded-lg overflow-hidden border border-border shadow-2xl group">
-                            <img src={preview} alt="Upload preview" className="w-full h-auto max-h-[500px] object-contain bg-black/5 dark:bg-white/5" />
-                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button variant="destructive" size="icon" onClick={removeImage} className="h-8 w-8 rounded-full shadow-lg">
-                                    <X className="h-4 w-4" />
+                        <div className="space-y-2">
+                            <div className="flex justify-center">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="gap-2"
+                                >
+                                    <RefreshCw className="h-4 w-4" /> Add Another
                                 </Button>
                             </div>
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-end p-4">
-                                <p className="text-white text-sm font-medium">Click "Analyze" to proceed</p>
+                            <div className="relative rounded-lg overflow-hidden border border-border shadow-2xl group">
+                                <img src={preview} alt="Upload preview" className="w-full h-auto max-h-[500px] object-contain bg-black/5 dark:bg-white/5" />
+                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Button variant="destructive" size="icon" onClick={removeImage} className="h-8 w-8 rounded-full shadow-lg">
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-end p-4">
+                                    <p className="text-white text-sm font-medium">Click "Analyze" to proceed</p>
+                                </div>
                             </div>
                         </div>
                     ) : (
