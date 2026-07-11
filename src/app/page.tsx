@@ -151,8 +151,6 @@ export default function Home() {
             <span>ArchEstimator</span>
           </div>
           <nav className="hidden md:flex gap-6 text-sm font-medium text-muted-foreground">
-            <a href="#" className="hover:text-foreground transition-colors">History</a>
-            <a href="#" className="hover:text-foreground transition-colors">Settings</a>
             <a href="#" className="hover:text-foreground transition-colors">Help</a>
           </nav>
           {status === "authenticated" ? (
@@ -250,6 +248,20 @@ export default function Home() {
           </div>
         </div>
       </main>
+
+      <footer className="border-t border-border/40 py-6 text-center text-sm text-muted-foreground">
+        <p>
+          Built by Mathews — got feedback or an idea?{" "}
+          <a
+            href="https://www.linkedin.com/in/mathewspmathew"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary font-medium hover:underline"
+          >
+            PING ME
+          </a>
+        </p>
+      </footer>
     </div>
   )
 }
