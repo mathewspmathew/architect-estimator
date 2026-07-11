@@ -251,7 +251,7 @@ export default function Home() {
 
       <footer className="border-t border-border/40 py-6 text-center text-sm text-muted-foreground">
         <p>
-          Built by Mathews — got feedback or an idea?{" "}
+          got feedback or an idea?{" "}
           <a
             href="https://www.linkedin.com/in/mathewspmathew"
             target="_blank"
