@@ -6,7 +6,7 @@ import { ImageUploader } from "@/components/ImageUploader"
 import { MaterialList } from "@/components/MaterialList"
 import { Material } from "@/types"
 import { Button } from "@/components/ui/button"
-import { Calculator, Hammer, ArrowRight, AlertCircle } from "lucide-react"
+import { Calculator, Hammer, ArrowRight, AlertCircle, RefreshCw } from "lucide-react"
 
 const PENDING_IMAGE_KEY = "archestimator:pendingImage"
 
@@ -209,8 +209,8 @@ export default function Home() {
                   >
                     {isAnalyzing ? (
                       <>
-                        <span className="inline-block animate-spin mr-2">⏳</span>
-                        Analyzing image (can take up to 3 min)...
+                        <RefreshCw className="mr-2 h-5 w-5 animate-spin" />
+                        Analyzing...
                       </>
                     ) : credits === 0 ? (
                       "Out of credits"
