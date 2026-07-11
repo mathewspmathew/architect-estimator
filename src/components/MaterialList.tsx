@@ -5,7 +5,7 @@ import { Material } from "@/types"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 // import { Input } from "@/components/ui/input" removed unused import
-import { Trash2, Plus, RefreshCw, Calculator } from "lucide-react"
+import { Trash2, Plus, RefreshCw, Calculator, Download } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { AnalyzingLoader } from "@/components/AnalyzingLoader"
 
@@ -91,6 +91,36 @@ export function MaterialList({ materials, onUpdate, isLoading }: MaterialListPro
 
     const totalCost = materials.reduce((acc, curr) => acc + (curr.price * curr.quantity), 0)
 
+    const escapeCsv = (value: string | number) => {
+        const str = String(value)
+        return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str
+    }
+
+    const handleExport = () => {
+        const header = ["Item Name", "Quantity", "Unit", "Est. Unit Price (INR)", "Total (INR)"]
+        const rows = materials.map(m => [
+            m.name,
+            m.quantity,
+            m.unit,
+            m.price,
+            (m.price * m.quantity).toFixed(2),
+        ])
+        rows.push(["", "", "", "Total", totalCost.toFixed(2)])
+
+        const csv = [header, ...rows]
+            .map(row => row.map(escapeCsv).join(","))
+            .join("\n")
+
+        // Prefix with a UTF-8 BOM so Excel renders the ₹ symbol correctly.
+        const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement("a")
+        link.href = url
+        link.download = "material-estimate.csv"
+        link.click()
+        URL.revokeObjectURL(url)
+    }
+
     return (
         <Card className="w-full glass-card animate-in fade-in slide-in-from-bottom-4 duration-700">
             <CardHeader className="flex flex-row items-center justify-between">
@@ -105,7 +135,7 @@ export function MaterialList({ materials, onUpdate, isLoading }: MaterialListPro
             </CardHeader>
             <CardContent>
                 <div className="rounded-md border border-border overflow-hidden">
-                    <div className="grid grid-cols-12 gap-4 p-4 bg-muted/50 text-sm font-medium text-muted-foreground">
+                    <div className="hidden md:grid grid-cols-12 gap-4 p-4 bg-muted/50 text-sm font-medium text-muted-foreground">
                         <div className="col-span-4">Item Name</div>
                         <div className="col-span-2">Quantity</div>
                         <div className="col-span-2">Unit</div>
@@ -122,28 +152,32 @@ export function MaterialList({ materials, onUpdate, isLoading }: MaterialListPro
                             </div>
                         ) : (
                             materials.map((material) => (
-                                <div key={material.id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-muted/30 transition-colors group">
-                                    <div className="col-span-4">
+                                <div key={material.id} className="grid grid-cols-2 gap-3 p-4 md:grid-cols-12 md:gap-4 md:items-center hover:bg-muted/30 transition-colors group">
+                                    <div className="col-span-2 md:col-span-4">
+                                        <label className="text-xs text-muted-foreground md:hidden">Item Name</label>
                                         <SimpleInput
                                             value={material.name}
                                             onChange={(e) => handleEdit(material.id, "name", e.target.value)}
                                             className="font-medium"
                                         />
                                     </div>
-                                    <div className="col-span-2">
+                                    <div className="md:col-span-2">
+                                        <label className="text-xs text-muted-foreground md:hidden">Quantity</label>
                                         <SimpleInput
                                             type="number"
                                             value={material.quantity}
                                             onChange={(e) => handleEdit(material.id, "quantity", parseFloat(e.target.value) || 0)}
                                         />
                                     </div>
-                                    <div className="col-span-2">
+                                    <div className="md:col-span-2">
+                                        <label className="text-xs text-muted-foreground md:hidden">Unit</label>
                                         <SimpleInput
                                             value={material.unit}
                                             onChange={(e) => handleEdit(material.id, "unit", e.target.value)}
                                         />
                                     </div>
-                                    <div className="col-span-3">
+                                    <div className="col-span-2 md:col-span-3">
+                                        <label className="text-xs text-muted-foreground md:hidden">Est. Unit Price</label>
                                         <div className="relative">
                                             <SimpleInput
                                                 type="number"
@@ -169,14 +203,15 @@ export function MaterialList({ materials, onUpdate, isLoading }: MaterialListPro
                                             )}
                                         </div>
                                     </div>
-                                    <div className="col-span-1 flex justify-end">
+                                    <div className="col-span-2 md:col-span-1 flex justify-end">
                                         <Button
                                             variant="ghost"
-                                            size="icon"
+                                            size="sm"
                                             onClick={() => handleDelete(material.id)}
-                                            className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                            className="text-destructive hover:text-destructive hover:bg-destructive/10 opacity-100 md:opacity-0 md:group-hover:opacity-100 gap-2"
                                         >
                                             <Trash2 className="h-4 w-4" />
+                                            <span className="md:hidden">Remove</span>
                                         </Button>
                                     </div>
                                 </div>
@@ -185,24 +220,37 @@ export function MaterialList({ materials, onUpdate, isLoading }: MaterialListPro
                     </div>
                 </div>
 
-                <div className="mt-4 flex justify-between items-center">
-                    <Button variant="outline" size="sm" onClick={handleAdd} className="gap-2">
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <Button variant="outline" size="sm" onClick={handleAdd} className="gap-2 w-full sm:w-auto">
                         <Plus className="h-4 w-4" /> Add Item
                     </Button>
 
-                    <Button
-                        variant="default"
-                        onClick={handleFindPrices}
-                        disabled={materials.length === 0 || isLoading || isFindingPrices}
-                    >
-                        {isFindingPrices ? (
-                            <>
-                                <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> Finding Prices...
-                            </>
-                        ) : (
-                            "Find Best Prices"
-                        )}
-                    </Button>
+                    <div className="flex flex-wrap gap-3 w-full sm:w-auto sm:ml-auto">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleExport}
+                            disabled={materials.length === 0}
+                            className="gap-2 w-full sm:w-auto"
+                        >
+                            <Download className="h-4 w-4" /> Export as Excel
+                        </Button>
+
+                        <Button
+                            variant="default"
+                            onClick={handleFindPrices}
+                            disabled={materials.length === 0 || isLoading || isFindingPrices}
+                            className="w-full sm:w-auto"
+                        >
+                            {isFindingPrices ? (
+                                <>
+                                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> Finding Prices...
+                                </>
+                            ) : (
+                                "Find Best Prices"
+                            )}
+                        </Button>
+                    </div>
                 </div>
             </CardContent>
         </Card>
