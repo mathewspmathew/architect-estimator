@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 // import { Input } from "@/components/ui/input" removed unused import
 import { Trash2, Plus, RefreshCw, Calculator } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { AnalyzingLoader } from "@/components/AnalyzingLoader"
 
 // Simple Input component since I didn't create ui/input.tsx yet
 const SimpleInput = ({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) => (
@@ -114,10 +115,7 @@ export function MaterialList({ materials, onUpdate, isLoading }: MaterialListPro
 
                     <div className="divide-y divide-border">
                         {isLoading ? (
-                            <div className="p-8 text-center text-muted-foreground animate-pulse">
-                                <RefreshCw className="h-8 w-8 mx-auto mb-2 animate-spin" />
-                                Analyzing image...
-                            </div>
+                            <AnalyzingLoader />
                         ) : materials.length === 0 ? (
                             <div className="p-8 text-center text-muted-foreground">
                                 No materials identified yet. Upload a drawing to start.
